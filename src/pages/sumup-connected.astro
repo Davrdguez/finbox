@@ -1,0 +1,39 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+<BaseLayout title="Cuenta SumUp conectada">
+  <h1 class="text-2xl font-bold mb-4 text-blue-700">Cuenta SumUp conectada ✅</h1>
+  <p class="text-gray-700 mb-4">Consultando tu saldo en tiempo real...</p>
+
+  <p id="sumup-saldo" class="text-green-700 text-lg font-semibold">Cargando...</p>
+
+  <script type="module">
+    const output = document.getElementById("sumup-saldo");
+    const hash = window.location.hash;
+    const params = new URLSearchParams(hash.substring(1));
+    const token = params.get("access_token");
+
+    if (!token) {
+      output.textContent = "No se encontró el token de acceso.";
+    } else {
+      fetch(`/api/sumup/balance?token=${token}`)
+        .then(res => res.json())
+        .then(data => {
+          console.log("SUMUP API:", data);
+
+          if (data.error) {
+            output.textContent = `Error: ${data.error}`;
+          } else if (data.balance && data.currency) {
+            const saldo = parseFloat(data.balance).toFixed(2);
+            output.textContent = `${saldo} ${data.currency}`;
+          } else {
+            output.textContent = "No se pudo obtener el saldo.";
+          }
+        })
+        .catch(err => {
+          console.error("Error en consulta SumUp:", err);
+          output.textContent = "Error de conexión al consultar SumUp.";
+        });
+    }
+  </script>
+</BaseLayout>

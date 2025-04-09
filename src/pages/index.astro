@@ -1,0 +1,76 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import AccountCard from "../components/AccountCard.astro";
+import { supabase } from "../lib/supabaseClient";
+
+let cuentas = [];
+
+const { data, error } = await supabase.from("cuentas").select("*");
+if (data) cuentas = data;
+---
+<BaseLayout title="FinBox">
+  <h1 class="text-3xl font-bold mb-6">Resumen de Cuentas</h1>
+
+  {cuentas.length === 0 ? (
+    <p class="text-gray-600">No hay cuentas registradas aún.</p>
+  ) : (
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+      {cuentas.map((cuenta) => (
+        <AccountCard {...cuenta} />
+      ))}
+    </div>
+  )}
+
+  <!-- Stripe tiempo real -->
+  <section class="mt-10 max-w-xl bg-white p-6 rounded-xl shadow">
+    <h2 class="text-xl font-semibold mb-4 text-blue-700">Saldo en Stripe (Tiempo Real)</h2>
+
+    <!-- <button
+      id="load-stripe"
+      class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+    >
+      Ver saldo
+    </button>
+    -->
+
+    <p id="stripe-saldo" class="mt-4 text-lg text-green-700 font-medium"></p>
+  </section>
+
+  <script type="module">
+  document.addEventListener("DOMContentLoaded", async () => {
+    const salida = document.querySelector("#stripe-saldo");
+
+    salida.textContent = "Consultando saldo...";
+
+    try {
+      const res = await fetch("/api/stripe-balance");
+      const data = await res.json();
+
+      const eurPending = data.pending?.find(e => e.currency === "eur");
+
+      if (eurPending) {
+        const amount = eurPending.amount / 100;
+        salida.textContent = `${amount.toFixed(2)} EUR`;
+      } else {
+        salida.textContent = "No hay saldo pendiente en EUR.";
+      }
+    } catch (error) {
+      salida.textContent = "Error al consultar Stripe.";
+    }
+  });
+</script>
+<!-- SumUp -->
+<section class="mt-10 max-w-xl bg-white p-6 rounded-xl shadow">
+  <h2 class="text-xl font-semibold mb-4 text-green-700">Conectar con SumUp</h2>
+  <a
+    href="/api/sumup/login"
+    class="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+  >
+    Conectar cuenta SumUp
+  </a>
+</section>
+
+
+  
+  
+</BaseLayout>
